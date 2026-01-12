@@ -67,6 +67,9 @@ interface ScheduleItem {
 
 type StatusType = "" | "error" | "success";
 
+const STORAGE_KEY_MUTED = "epg-player-muted";
+const STORAGE_KEY_VOLUME = "epg-player-volume";
+
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<MpegtsPlayer | null>(null);
@@ -75,7 +78,13 @@ function App() {
   const [channelName, setChannelName] = useState("Loading...");
   const [status, setStatus] = useState("Ready");
   const [statusType, setStatusType] = useState<StatusType>("");
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(() => {
+    return localStorage.getItem(STORAGE_KEY_MUTED) === "true";
+  });
+  const [volume, setVolume] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_VOLUME);
+    return saved ? parseFloat(saved) : 1;
+  });
 
   const updateStatus = useCallback((message: string, type: StatusType = "") => {
     setStatus(message);
@@ -111,6 +120,9 @@ function App() {
       playerRef.current = player;
 
       if (videoRef.current) {
+        videoRef.current.muted = isMuted;
+        videoRef.current.volume = volume;
+
         player.attachMediaElement(videoRef.current);
         player.load();
 
@@ -139,7 +151,7 @@ function App() {
     } else {
       updateStatus("MPEG-TS playback not supported", "error");
     }
-  }, [updateStatus]);
+  }, [updateStatus, isMuted, volume]);
 
   const stopStream = useCallback(() => {
     if (playerRef.current) {
@@ -157,9 +169,11 @@ function App() {
 
   const toggleMute = useCallback(() => {
     if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted;
-      setIsMuted(videoRef.current.muted);
-      updateStatus(videoRef.current.muted ? "Muted" : "Unmuted", "");
+      const newMuted = !videoRef.current.muted;
+      videoRef.current.muted = newMuted;
+      setIsMuted(newMuted);
+      localStorage.setItem(STORAGE_KEY_MUTED, String(newMuted));
+      updateStatus(newMuted ? "Muted" : "Unmuted", "");
     }
   }, [updateStatus]);
 
@@ -205,6 +219,21 @@ function App() {
         playerRef.current.destroy();
       }
     };
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleVolumeChange = () => {
+      setIsMuted(video.muted);
+      setVolume(video.volume);
+      localStorage.setItem(STORAGE_KEY_MUTED, String(video.muted));
+      localStorage.setItem(STORAGE_KEY_VOLUME, String(video.volume));
+    };
+
+    video.addEventListener("volumechange", handleVolumeChange);
+    return () => video.removeEventListener("volumechange", handleVolumeChange);
   }, []);
 
   return (
