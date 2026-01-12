@@ -209,59 +209,63 @@ function App() {
 
   return (
     <div className="player-container">
-      <div className="channel-info">
-        <span className="live-badge">LIVE</span>
-        <span className="channel-name">{channelName}</span>
-      </div>
+      <div className="sidebar">
+        <div className="channel-list-header">
+          <span>Channels</span>
+          <button className="refresh-btn" onClick={loadChannels}>
+            Refresh
+          </button>
+        </div>
+        <div className="channel-list">
+          {channels.length === 0 ? (
+            <div className="channel-item">Loading...</div>
+          ) : (
+            channels.map((item) => {
+              const prog = item.programs[0];
+              const isActive = currentChannelId === item.channel.id;
 
-      <div className="video-wrapper">
-        <video ref={videoRef} controls autoPlay />
-      </div>
-
-      <div className="controls">
-        <button onClick={() => currentChannelId && startStream(currentChannelId)}>
-          Play
-        </button>
-        <button onClick={stopStream}>Stop</button>
-        <button onClick={toggleMute}>
-          {isMuted ? "Unmute" : "Mute"}
-        </button>
-        <button onClick={toggleFullscreen}>Fullscreen</button>
-      </div>
-
-      <div className={`status ${statusType}`}>{status}</div>
-
-      <div className="channel-list-header">
-        <span>Channels</span>
-        <button className="refresh-btn" onClick={loadChannels}>
-          Refresh
-        </button>
-      </div>
-      <div className="channel-list">
-        {channels.length === 0 ? (
-          <div className="channel-item">Loading...</div>
-        ) : (
-          channels.map((item) => {
-            const prog = item.programs[0];
-            const isActive = currentChannelId === item.channel.id;
-
-            return (
-              <div
-                key={item.channel.id}
-                className={`channel-item ${isActive ? "active" : ""}`}
-                onClick={() => switchChannel(item.channel.id, item.channel.name)}
-              >
-                <div className="channel-item-name">{item.channel.name}</div>
-                <div className="channel-item-program">
-                  {prog ? prog.name : "No program info"}
+              return (
+                <div
+                  key={item.channel.id}
+                  className={`channel-item ${isActive ? "active" : ""}`}
+                  onClick={() => switchChannel(item.channel.id, item.channel.name)}
+                >
+                  <div className="channel-item-name">{item.channel.name}</div>
+                  <div className="channel-item-program">
+                    {prog ? prog.name : "No program info"}
+                  </div>
+                  {prog?.description && (
+                    <div className="channel-item-desc">{prog.description}</div>
+                  )}
                 </div>
-                {prog?.description && (
-                  <div className="channel-item-desc">{prog.description}</div>
-                )}
-              </div>
-            );
-          })
-        )}
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      <div className="main-content">
+        <div className="channel-info">
+          <span className="live-badge">LIVE</span>
+          <span className="channel-name">{channelName}</span>
+        </div>
+
+        <div className="video-wrapper">
+          <video ref={videoRef} controls autoPlay />
+        </div>
+
+        <div className="controls">
+          <button onClick={() => currentChannelId && startStream(currentChannelId)}>
+            Play
+          </button>
+          <button onClick={stopStream}>Stop</button>
+          <button onClick={toggleMute}>
+            {isMuted ? "Unmute" : "Mute"}
+          </button>
+          <button onClick={toggleFullscreen}>Fullscreen</button>
+        </div>
+
+        <div className={`status ${statusType}`}>{status}</div>
       </div>
     </div>
   );
