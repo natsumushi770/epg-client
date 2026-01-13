@@ -102,6 +102,16 @@ function App() {
     return Math.max(0, Math.min(100, (elapsed / total) * 100));
   };
 
+  const formatTime = (timestamp: number): string => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const formatDuration = (startAt: number, endAt: number): string => {
+    const minutes = Math.round((endAt - startAt) / 60000);
+    return `${minutes}分`;
+  };
+
   const updateStatus = useCallback((message: string, type: StatusType = "") => {
     setStatus(message);
     setStatusType(type);
@@ -245,6 +255,11 @@ function App() {
                   <div className="channel-item-program">
                     {prog ? prog.name : "No program info"}
                   </div>
+                  {prog && (
+                    <div className="channel-item-time">
+                      {formatTime(prog.startAt)} - {formatTime(prog.endAt)} ({formatDuration(prog.startAt, prog.endAt)})
+                    </div>
+                  )}
                   {prog?.description && (
                     <div className="channel-item-desc">{prog.description}</div>
                   )}
