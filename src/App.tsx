@@ -281,6 +281,9 @@ function App() {
             max="1"
             step="0.01"
             value={volume}
+            style={{
+              background: `linear-gradient(to right, #5c6bc0 0%, #5c6bc0 ${volume * 100}%, #2a2a4a ${volume * 100}%, #2a2a4a 100%)`,
+            }}
             onChange={(e) => {
               const newVolume = parseFloat(e.target.value);
               setVolume(newVolume);
