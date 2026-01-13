@@ -85,6 +85,21 @@ function App() {
     const saved = localStorage.getItem(STORAGE_KEY_VOLUME);
     return saved ? parseFloat(saved) : 1;
   });
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getProgress = (prog: Program): number => {
+    const total = prog.endAt - prog.startAt;
+    if (total <= 0) return 0;
+    const elapsed = currentTime - prog.startAt;
+    return Math.max(0, Math.min(100, (elapsed / total) * 100));
+  };
 
   const updateStatus = useCallback((message: string, type: StatusType = "") => {
     setStatus(message);
@@ -214,7 +229,12 @@ function App() {
   useEffect(() => {
     loadChannels();
 
+    const interval = setInterval(() => {
+      loadChannels();
+    }, 5000);
+
     return () => {
+      clearInterval(interval);
       if (playerRef.current) {
         playerRef.current.destroy();
       }
@@ -265,6 +285,14 @@ function App() {
                   </div>
                   {prog?.description && (
                     <div className="channel-item-desc">{prog.description}</div>
+                  )}
+                  {prog && (
+                    <div className="channel-item-progress">
+                      <div
+                        className="channel-item-progress-bar"
+                        style={{ width: `${getProgress(prog)}%` }}
+                      />
+                    </div>
                   )}
                 </div>
               );
