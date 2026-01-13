@@ -76,9 +76,9 @@ function App() {
   const hasInitializedRef = useRef(false);
   const [channels, setChannels] = useState<ScheduleItem[]>([]);
   const [currentChannelId, setCurrentChannelId] = useState<number | null>(null);
-  const [channelName, setChannelName] = useState("Loading...");
-  const [status, setStatus] = useState("Ready");
-  const [statusType, setStatusType] = useState<StatusType>("");
+  const [_channelName, setChannelName] = useState("Loading...");
+  const [_status, setStatus] = useState("Ready");
+  const [_statusType, setStatusType] = useState<StatusType>("");
   const [isMuted, setIsMuted] = useState(() => {
     return localStorage.getItem(STORAGE_KEY_MUTED) === "true";
   });
@@ -279,11 +279,6 @@ function App() {
       </div>
 
       <div className="main-content">
-        <div className="channel-info">
-          <span className="live-badge">LIVE</span>
-          <span className="channel-name">{channelName}</span>
-        </div>
-
         <div className="video-wrapper">
           <video ref={videoRef} controls autoPlay />
         </div>
@@ -311,7 +306,29 @@ function App() {
           />
         </div>
 
-        <div className={`status ${statusType}`}>{status}</div>
+        {(() => {
+          const currentChannel = channels.find(c => c.channel.id === currentChannelId);
+          const currentProg = currentChannel?.programs[0];
+          if (!currentProg) return null;
+          return (
+            <div className="now-playing">
+              <div className="now-playing-channel">{currentChannel?.channel.name}</div>
+              <div className="now-playing-title">{currentProg.name}</div>
+              <div className="now-playing-time">
+                {formatTime(currentProg.startAt)} - {formatTime(currentProg.endAt)} ({formatDuration(currentProg.startAt, currentProg.endAt)})
+              </div>
+              {currentProg.description && (
+                <div className="now-playing-desc">{currentProg.description}</div>
+              )}
+              <div className="now-playing-progress">
+                <div
+                  className="now-playing-progress-bar"
+                  style={{ width: `${getProgress(currentProg)}%` }}
+                />
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
