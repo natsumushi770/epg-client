@@ -73,6 +73,7 @@ const STORAGE_KEY_VOLUME = "epg-player-volume";
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<MpegtsPlayer | null>(null);
+  const hasInitializedRef = useRef(false);
   const [channels, setChannels] = useState<ScheduleItem[]>([]);
   const [currentChannelId, setCurrentChannelId] = useState<number | null>(null);
   const [channelName, setChannelName] = useState("Loading...");
@@ -168,40 +169,6 @@ function App() {
     }
   }, [updateStatus, isMuted, volume]);
 
-  const stopStream = useCallback(() => {
-    if (playerRef.current) {
-      playerRef.current.pause();
-      playerRef.current.unload();
-      playerRef.current.detachMediaElement();
-      playerRef.current.destroy();
-      playerRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.pause();
-    }
-    updateStatus("Stopped", "");
-  }, [updateStatus]);
-
-  const toggleMute = useCallback(() => {
-    if (videoRef.current) {
-      const newMuted = !videoRef.current.muted;
-      videoRef.current.muted = newMuted;
-      setIsMuted(newMuted);
-      localStorage.setItem(STORAGE_KEY_MUTED, String(newMuted));
-      updateStatus(newMuted ? "Muted" : "Unmuted", "");
-    }
-  }, [updateStatus]);
-
-  const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      videoRef.current?.requestFullscreen().catch(() => {
-        updateStatus("Failed to enter fullscreen", "error");
-      });
-    } else {
-      document.exitFullscreen();
-    }
-  }, [updateStatus]);
-
   const switchChannel = useCallback((channelId: number, name: string) => {
     setChannelName(name);
     document.title = `EPG Player - ${name}`;
@@ -214,7 +181,8 @@ function App() {
       const schedules: ScheduleItem[] = await invoke("fetch_schedules");
       setChannels(schedules);
 
-      if (schedules.length > 0 && currentChannelId === null) {
+      if (schedules.length > 0 && !hasInitializedRef.current) {
+        hasInitializedRef.current = true;
         const firstChannel = schedules[0].channel;
         setChannelName(firstChannel.name);
         document.title = `EPG Player - ${firstChannel.name}`;
@@ -224,7 +192,7 @@ function App() {
       console.error("Failed to load channels:", err);
       updateStatus("Failed to load channel list", "error");
     }
-  }, [currentChannelId, startStream, updateStatus]);
+  }, [startStream, updateStatus]);
 
   useEffect(() => {
     loadChannels();
@@ -259,12 +227,6 @@ function App() {
   return (
     <div className="player-container">
       <div className="sidebar">
-        <div className="channel-list-header">
-          <span>Channels</span>
-          <button className="refresh-btn" onClick={loadChannels}>
-            Refresh
-          </button>
-        </div>
         <div className="channel-list">
           {channels.length === 0 ? (
             <div className="channel-item">Loading...</div>
@@ -312,14 +274,23 @@ function App() {
         </div>
 
         <div className="controls">
-          <button onClick={() => currentChannelId && startStream(currentChannelId)}>
-            Play
-          </button>
-          <button onClick={stopStream}>Stop</button>
-          <button onClick={toggleMute}>
-            {isMuted ? "Unmute" : "Mute"}
-          </button>
-          <button onClick={toggleFullscreen}>Fullscreen</button>
+          <input
+            type="range"
+            className="volume-slider"
+            min="0"
+            max="1"
+            step="0.01"
+            value={volume}
+            onChange={(e) => {
+              const newVolume = parseFloat(e.target.value);
+              setVolume(newVolume);
+              if (videoRef.current) {
+                videoRef.current.volume = newVolume;
+                videoRef.current.muted = newVolume === 0;
+              }
+              localStorage.setItem(STORAGE_KEY_VOLUME, String(newVolume));
+            }}
+          />
         </div>
 
         <div className={`status ${statusType}`}>{status}</div>
