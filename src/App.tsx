@@ -27,6 +27,10 @@ interface MpegtsPlayerOptions {
   liveBufferLatencyChasing?: boolean;
   liveBufferLatencyMaxLatency?: number;
   liveBufferLatencyMinRemain?: number;
+  liveBufferLatencyChasingOnPaused?: boolean;
+  autoCleanupSourceBuffer?: boolean;
+  autoCleanupMaxBackwardDuration?: number;
+  autoCleanupMinBackwardDuration?: number;
 }
 
 interface MpegtsPlayer {
@@ -139,8 +143,12 @@ function App() {
       }, {
         enableWorker: true,
         liveBufferLatencyChasing: true,
-        liveBufferLatencyMaxLatency: 1.5,
-        liveBufferLatencyMinRemain: 0.3,
+        liveBufferLatencyMaxLatency: 5,
+        liveBufferLatencyMinRemain: 1,
+        liveBufferLatencyChasingOnPaused: true,
+        autoCleanupSourceBuffer: true,
+        autoCleanupMaxBackwardDuration: 30,
+        autoCleanupMinBackwardDuration: 15,
       });
 
       playerRef.current = player;
