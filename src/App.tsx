@@ -90,6 +90,7 @@ function App() {
     const saved = localStorage.getItem(STORAGE_KEY_VOLUME);
     return saved ? parseFloat(saved) : 1;
   });
+  const [isPaused, setIsPaused] = useState(false);
   const [currentTime, setCurrentTime] = useState(Date.now());
 
   useEffect(() => {
@@ -131,6 +132,7 @@ function App() {
     }
 
     setCurrentChannelId(channelId);
+    setIsPaused(false);
 
     // Get stream URL from Rust backend
     const streamUrl: string = await invoke("get_stream_url", { channelId });
@@ -186,6 +188,18 @@ function App() {
       updateStatus("MPEG-TS playback not supported", "error");
     }
   }, [updateStatus, isMuted, volume]);
+
+  const togglePlayPause = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.play().catch(() => {});
+      setIsPaused(false);
+    } else {
+      video.pause();
+      setIsPaused(true);
+    }
+  }, []);
 
   const switchChannel = useCallback((channelId: number, name: string) => {
     setChannelName(name);
@@ -287,8 +301,16 @@ function App() {
       </div>
 
       <div className="main-content">
-        <div className="video-wrapper">
-          <video ref={videoRef} controls autoPlay />
+        <div className="video-wrapper" onClick={togglePlayPause}>
+          <video ref={videoRef} autoPlay />
+          {isPaused && (
+            <div className="pause-overlay">
+              <svg className="pause-icon" viewBox="0 0 24 24" fill="white">
+                <rect x="6" y="4" width="4" height="16" />
+                <rect x="14" y="4" width="4" height="16" />
+              </svg>
+            </div>
+          )}
         </div>
 
         <div className="controls">
