@@ -12,8 +12,11 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 
-const API_BASE: &str = "http://optiplex-pc:8888";
 const PROXY_PORT: u16 = 13000;
+
+fn api_base() -> String {
+    std::env::var("API_BASE").expect("API_BASE must be set in .env or environment")
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TvChannel {
@@ -58,7 +61,7 @@ pub struct ScheduleItem {
 #[tauri::command]
 async fn fetch_schedules() -> Result<Vec<ScheduleItem>, String> {
     let client = Client::new();
-    let url = format!("{}/api/schedules/broadcasting?isHalfWidth=true", API_BASE);
+    let url = format!("{}/api/schedules/broadcasting?isHalfWidth=true", api_base());
 
     let response = client
         .get(&url)
@@ -116,7 +119,7 @@ async fn handle_request(
     // Stream proxy: /stream/{channel_id}
     if path.starts_with("/stream/") {
         let channel_id = path.trim_start_matches("/stream/");
-        let stream_url = format!("{}/api/streams/live/{}/m2ts?mode=0", API_BASE, channel_id);
+        let stream_url = format!("{}/api/streams/live/{}/m2ts?mode=0", api_base(), channel_id);
 
         println!("Proxying stream for channel: {}", channel_id);
 
@@ -197,6 +200,8 @@ async fn run_proxy_server() {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    dotenvy::dotenv().ok();
+
     // Start HTTP proxy server in background for streaming
     std::thread::spawn(|| {
         let rt = tokio::runtime::Runtime::new().unwrap();
