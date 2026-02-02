@@ -15,7 +15,7 @@ use tokio::net::TcpListener;
 const PROXY_PORT: u16 = 13000;
 
 fn api_base() -> String {
-    std::env::var("API_BASE").expect("API_BASE must be set in .env or environment")
+    std::env::var("API_BASE").unwrap_or_else(|_| env!("API_BASE").to_string())
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -200,8 +200,6 @@ async fn run_proxy_server() {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    dotenvy::dotenv().ok();
-
     // Start HTTP proxy server in background for streaming
     std::thread::spawn(|| {
         let rt = tokio::runtime::Runtime::new().unwrap();
