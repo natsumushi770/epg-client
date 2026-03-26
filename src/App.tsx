@@ -71,8 +71,6 @@ interface ScheduleItem {
 
 type StatusType = "" | "error" | "success";
 
-const STORAGE_KEY_MUTED = "epg-player-muted";
-const STORAGE_KEY_VOLUME = "epg-player-volume";
 
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -83,14 +81,6 @@ function App() {
   const [_channelName, setChannelName] = useState("Loading...");
   const [_status, setStatus] = useState("Ready");
   const [_statusType, setStatusType] = useState<StatusType>("");
-  const [isMuted, setIsMuted] = useState(() => {
-    return localStorage.getItem(STORAGE_KEY_MUTED) === "true";
-  });
-  const [volume, setVolume] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_VOLUME);
-    return saved ? parseFloat(saved) : 1;
-  });
-  const [isPaused, setIsPaused] = useState(false);
   const [currentTime, setCurrentTime] = useState(Date.now());
 
   useEffect(() => {
@@ -132,7 +122,6 @@ function App() {
     }
 
     setCurrentChannelId(channelId);
-    setIsPaused(false);
 
     // Get stream URL from Rust backend
     const streamUrl: string = await invoke("get_stream_url", { channelId });
@@ -156,9 +145,6 @@ function App() {
       playerRef.current = player;
 
       if (videoRef.current) {
-        videoRef.current.muted = isMuted;
-        videoRef.current.volume = volume;
-
         player.attachMediaElement(videoRef.current);
         player.load();
 
@@ -187,19 +173,7 @@ function App() {
     } else {
       updateStatus("MPEG-TS playback not supported", "error");
     }
-  }, [updateStatus, isMuted, volume]);
-
-  const togglePlayPause = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.paused) {
-      video.play().catch(() => {});
-      setIsPaused(false);
-    } else {
-      video.pause();
-      setIsPaused(true);
-    }
-  }, []);
+  }, [updateStatus]);
 
   const switchChannel = useCallback((channelId: number, name: string) => {
     setChannelName(name);
@@ -239,21 +213,6 @@ function App() {
         playerRef.current.destroy();
       }
     };
-  }, []);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const handleVolumeChange = () => {
-      setIsMuted(video.muted);
-      setVolume(video.volume);
-      localStorage.setItem(STORAGE_KEY_MUTED, String(video.muted));
-      localStorage.setItem(STORAGE_KEY_VOLUME, String(video.volume));
-    };
-
-    video.addEventListener("volumechange", handleVolumeChange);
-    return () => video.removeEventListener("volumechange", handleVolumeChange);
   }, []);
 
   return (
@@ -301,39 +260,8 @@ function App() {
       </div>
 
       <div className="main-content">
-        <div className="video-wrapper" onClick={togglePlayPause}>
-          <video ref={videoRef} autoPlay />
-          {isPaused && (
-            <div className="pause-overlay">
-              <svg className="pause-icon" viewBox="0 0 24 24" fill="white">
-                <rect x="6" y="4" width="4" height="16" />
-                <rect x="14" y="4" width="4" height="16" />
-              </svg>
-            </div>
-          )}
-        </div>
-
-        <div className="controls">
-          <input
-            type="range"
-            className="volume-slider"
-            min="0"
-            max="1"
-            step="0.01"
-            value={volume}
-            style={{
-              background: `linear-gradient(to right, #5c6bc0 0%, #5c6bc0 ${volume * 100}%, #2a2a4a ${volume * 100}%, #2a2a4a 100%)`,
-            }}
-            onChange={(e) => {
-              const newVolume = parseFloat(e.target.value);
-              setVolume(newVolume);
-              if (videoRef.current) {
-                videoRef.current.volume = newVolume;
-                videoRef.current.muted = newVolume === 0;
-              }
-              localStorage.setItem(STORAGE_KEY_VOLUME, String(newVolume));
-            }}
-          />
+        <div className="video-wrapper">
+          <video ref={videoRef} autoPlay controls />
         </div>
 
         {(() => {
