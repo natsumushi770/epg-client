@@ -74,6 +74,7 @@ type StatusType = "" | "error" | "success";
 
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const videoWrapperRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<MpegtsPlayer | null>(null);
   const hasInitializedRef = useRef(false);
   const [channels, setChannels] = useState<ScheduleItem[]>([]);
@@ -82,12 +83,36 @@ function App() {
   const [_status, setStatus] = useState("Ready");
   const [_statusType, setStatusType] = useState<StatusType>("");
   const [currentTime, setCurrentTime] = useState(Date.now());
+  const [isHovered, setIsHovered] = useState(false);
+  const [volume, setVolume] = useState(() => {
+    const saved = localStorage.getItem("epg-player-volume");
+    return saved !== null ? parseFloat(saved) : 1;
+  });
+  const [isMuted, setIsMuted] = useState(() => {
+    return localStorage.getItem("epg-player-muted") === "true";
+  });
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(Date.now());
     }, 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = volume;
+      videoRef.current.muted = isMuted;
+    }
+  }, [volume, isMuted]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
   const getProgress = (prog: Program): number => {
@@ -181,6 +206,30 @@ function App() {
     startStream(channelId);
   }, [startStream]);
 
+  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    setVolume(val);
+    setIsMuted(false);
+    localStorage.setItem("epg-player-volume", String(val));
+    localStorage.setItem("epg-player-muted", "false");
+  }, []);
+
+  const handleMuteToggle = useCallback(() => {
+    setIsMuted((prev) => {
+      const next = !prev;
+      localStorage.setItem("epg-player-muted", String(next));
+      return next;
+    });
+  }, []);
+
+  const handleFullscreenToggle = useCallback(() => {
+    if (!document.fullscreenElement) {
+      videoWrapperRef.current?.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  }, []);
+
   const loadChannels = useCallback(async () => {
     try {
       // Fetch schedules via Tauri IPC
@@ -260,8 +309,34 @@ function App() {
       </div>
 
       <div className="main-content">
-        <div className="video-wrapper">
-          <video ref={videoRef} autoPlay controls />
+        <div
+          className="video-wrapper"
+          ref={videoWrapperRef}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <video ref={videoRef} autoPlay />
+          <div className={`controls-overlay${isHovered ? " visible" : ""}`}>
+            <div className="controls-left">
+              <button className="volume-icon" onClick={handleMuteToggle}>
+                {isMuted || volume === 0 ? "🔇" : "🔊"}
+              </button>
+              <input
+                className="volume-slider"
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={isMuted ? 0 : volume}
+                onChange={handleVolumeChange}
+              />
+            </div>
+            <div className="controls-right">
+              <button className="fullscreen-btn" onClick={handleFullscreenToggle}>
+                {isFullscreen ? "⊡" : "⛶"}
+              </button>
+            </div>
+          </div>
         </div>
 
         {(() => {
