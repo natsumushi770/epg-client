@@ -35,13 +35,13 @@ epg-proxy/
 
 ```bash
 # 依存関係のインストール
-pnpm install
+bun install
 
 # 開発モードで起動
-pnpm tauri dev
+bun tauri dev
 
 # ビルド
-pnpm tauri build
+bun tauri build
 ```
 
 ## アーキテクチャ
