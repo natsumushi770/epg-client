@@ -208,6 +208,14 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .setup(|app| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.set_icon(tauri::image::Image::from_bytes(include_bytes!(
+                    "../icons/icon.png"
+                ))?);
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![fetch_schedules, get_stream_url])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
