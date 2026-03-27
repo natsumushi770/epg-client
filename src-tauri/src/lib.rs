@@ -1,3 +1,4 @@
+use tauri::Manager;
 use futures::StreamExt;
 use http_body_util::{BodyExt, StreamBody};
 use hyper::body::Frame;
@@ -210,9 +211,9 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             if let Some(window) = app.get_webview_window("main") {
-                let _ = window.set_icon(tauri::image::Image::from_bytes(include_bytes!(
-                    "../icons/icon.png"
-                ))?);
+                if let Some(icon) = app.default_window_icon() {
+                    let _ = window.set_icon(icon.clone());
+                }
             }
             Ok(())
         })
