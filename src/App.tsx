@@ -79,7 +79,7 @@ interface NowPlayingProps {
   currentTime: number;
 }
 
-function NowPlaying({ channel, program, currentTime }: NowPlayingProps) {
+const NowPlaying = ({ channel, program, currentTime }: NowPlayingProps) => {
   const formatTime = (timestamp: number): string => {
     const zdt = Temporal.Instant.fromEpochMilliseconds(timestamp)
       .toZonedDateTimeISO(Temporal.Now.timeZoneId());
@@ -119,7 +119,7 @@ function NowPlaying({ channel, program, currentTime }: NowPlayingProps) {
 }
 
 
-function App() {
+const App = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoWrapperRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<MpegtsPlayer | null>(null);
