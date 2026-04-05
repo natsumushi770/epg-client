@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { Temporal } from "temporal-polyfill";
 import "./App.css";
 
 declare global {
@@ -72,6 +73,52 @@ interface ScheduleItem {
 type StatusType = "" | "error" | "success";
 
 
+interface NowPlayingProps {
+  channel: TvChannel;
+  program: Program;
+  currentTime: number;
+}
+
+function NowPlaying({ channel, program, currentTime }: NowPlayingProps) {
+  const formatTime = (timestamp: number): string => {
+    const zdt = Temporal.Instant.fromEpochMilliseconds(timestamp)
+      .toZonedDateTimeISO(Temporal.Now.timeZoneId());
+    return zdt.toLocaleString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const formatDuration = (startAt: number, endAt: number): string => {
+    const minutes = Math.round((endAt - startAt) / 60000);
+    return `${minutes}分`;
+  };
+
+  const getProgress = (): number => {
+    const total = program.endAt - program.startAt;
+    if (total <= 0) return 0;
+    const elapsed = currentTime - program.startAt;
+    return Math.max(0, Math.min(100, (elapsed / total) * 100));
+  };
+
+  return (
+    <div className="now-playing">
+      <div className="now-playing-channel">{channel.name}</div>
+      <div className="now-playing-title">{program.name}</div>
+      <div className="now-playing-time">
+        {formatTime(program.startAt)} - {formatTime(program.endAt)} ({formatDuration(program.startAt, program.endAt)})
+      </div>
+      {program.description && (
+        <div className="now-playing-desc">{program.description}</div>
+      )}
+      <div className="now-playing-progress">
+        <div
+          className="now-playing-progress-bar"
+          style={{ width: `${getProgress()}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoWrapperRef = useRef<HTMLDivElement>(null);
@@ -82,7 +129,7 @@ function App() {
   const [_channelName, setChannelName] = useState("Loading...");
   const [_status, setStatus] = useState("Ready");
   const [_statusType, setStatusType] = useState<StatusType>("");
-  const [currentTime, setCurrentTime] = useState(Date.now());
+  const [currentTime, setCurrentTime] = useState(() => Temporal.Now.instant().epochMilliseconds);
   const [controlsVisible, setControlsVisible] = useState(false);
   const hideControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [volume, setVolume] = useState(() => {
@@ -96,7 +143,7 @@ function App() {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(Date.now());
+      setCurrentTime(Temporal.Now.instant().epochMilliseconds);
     }, 1000);
     return () => clearInterval(timer);
   }, []);
@@ -130,8 +177,9 @@ function App() {
   };
 
   const formatTime = (timestamp: number): string => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+    const zdt = Temporal.Instant.fromEpochMilliseconds(timestamp)
+      .toZonedDateTimeISO(Temporal.Now.timeZoneId());
+    return zdt.toLocaleString("ja-JP", { hour: "2-digit", minute: "2-digit" });
   };
 
   const formatDuration = (startAt: number, endAt: number): string => {
@@ -271,6 +319,9 @@ function App() {
     };
   }, []);
 
+  const currentChannel = channels.find(c => c.channel.id === currentChannelId);
+  const currentProg = currentChannel?.programs[0];
+
   return (
     <div className="player-container">
       <div className="sidebar">
@@ -350,29 +401,9 @@ function App() {
           </div>
         </div>
 
-        {(() => {
-          const currentChannel = channels.find(c => c.channel.id === currentChannelId);
-          const currentProg = currentChannel?.programs[0];
-          if (!currentProg) return null;
-          return (
-            <div className="now-playing">
-              <div className="now-playing-channel">{currentChannel?.channel.name}</div>
-              <div className="now-playing-title">{currentProg.name}</div>
-              <div className="now-playing-time">
-                {formatTime(currentProg.startAt)} - {formatTime(currentProg.endAt)} ({formatDuration(currentProg.startAt, currentProg.endAt)})
-              </div>
-              {currentProg.description && (
-                <div className="now-playing-desc">{currentProg.description}</div>
-              )}
-              <div className="now-playing-progress">
-                <div
-                  className="now-playing-progress-bar"
-                  style={{ width: `${getProgress(currentProg)}%` }}
-                />
-              </div>
-            </div>
-          );
-        })()}
+        {currentChannel && currentProg && (
+          <NowPlaying channel={currentChannel.channel} program={currentProg} currentTime={currentTime} />
+        )}
       </div>
     </div>
   );
