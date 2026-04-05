@@ -83,7 +83,8 @@ function App() {
   const [_status, setStatus] = useState("Ready");
   const [_statusType, setStatusType] = useState<StatusType>("");
   const [currentTime, setCurrentTime] = useState(Date.now());
-  const [isHovered, setIsHovered] = useState(false);
+  const [controlsVisible, setControlsVisible] = useState(false);
+  const hideControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [volume, setVolume] = useState(() => {
     const saved = localStorage.getItem("epg-player-volume");
     return saved !== null ? parseFloat(saved) : 1;
@@ -110,12 +111,15 @@ function App() {
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
-      if (document.fullscreenElement) {
-        setIsHovered(false);
-      }
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const showControlsTemporarily = useCallback(() => {
+    setControlsVisible(true);
+    if (hideControlsTimerRef.current) clearTimeout(hideControlsTimerRef.current);
+    hideControlsTimerRef.current = setTimeout(() => setControlsVisible(false), 3000);
   }, []);
 
   const getProgress = (prog: Program): number => {
@@ -315,11 +319,14 @@ function App() {
         <div
           className="video-wrapper"
           ref={videoWrapperRef}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          onMouseMove={showControlsTemporarily}
+          onMouseLeave={() => {
+            setControlsVisible(false);
+            if (hideControlsTimerRef.current) clearTimeout(hideControlsTimerRef.current);
+          }}
         >
           <video ref={videoRef} autoPlay />
-          <div className={`controls-overlay${isHovered ? " visible" : ""}`}>
+          <div className={`controls-overlay${controlsVisible ? " visible" : ""}`}>
             <div className="controls-left">
               <button className="volume-icon" onClick={handleMuteToggle}>
                 {isMuted || volume === 0 ? "🔇" : "🔊"}
