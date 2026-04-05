@@ -320,6 +320,7 @@ function App() {
           className="video-wrapper"
           ref={videoWrapperRef}
           onMouseMove={showControlsTemporarily}
+          onDoubleClick={handleFullscreenToggle}
           onMouseLeave={() => {
             setControlsVisible(false);
             if (hideControlsTimerRef.current) clearTimeout(hideControlsTimerRef.current);
