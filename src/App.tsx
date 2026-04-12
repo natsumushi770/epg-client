@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Temporal } from "temporal-polyfill";
 import "./App.css";
 
@@ -277,13 +278,37 @@ const App = () => {
     });
   }, []);
 
-  const handleFullscreenToggle = useCallback(() => {
-    if (!document.fullscreenElement) {
-      videoWrapperRef.current?.requestFullscreen();
-    } else {
-      document.exitFullscreen();
+  const handleFullscreenToggle = useCallback(async () => {
+    const wrapper = videoWrapperRef.current;
+
+    if (!document.fullscreenElement && wrapper?.requestFullscreen) {
+      try {
+        await wrapper.requestFullscreen();
+        return;
+      } catch (err) {
+        console.warn("requestFullscreen failed, falling back to Tauri window fullscreen:", err);
+      }
     }
-  }, []);
+
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+        return;
+      } catch (err) {
+        console.warn("exitFullscreen failed, falling back to Tauri window fullscreen:", err);
+      }
+    }
+
+    try {
+      const appWindow = getCurrentWindow();
+      const next = !(await appWindow.isFullscreen());
+      await appWindow.setFullscreen(next);
+      setIsFullscreen(next);
+    } catch (err) {
+      console.error("Failed to toggle fullscreen:", err);
+      updateStatus("Failed to toggle fullscreen", "error");
+    }
+  }, [updateStatus]);
 
   const loadChannels = useCallback(async () => {
     try {
