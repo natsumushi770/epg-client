@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, type CSSProperties } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Temporal } from "temporal-polyfill";
@@ -72,6 +72,43 @@ interface ScheduleItem {
 }
 
 type StatusType = "" | "error" | "success";
+
+type IconProps = {
+  className?: string;
+};
+
+const VolumeHighIcon = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M4 9.25h3.2L12 5.1v13.8l-4.8-4.15H4z" />
+    <path d="M15 8.2a5.2 5.2 0 0 1 0 7.6" />
+    <path d="M17.4 5.8a8.8 8.8 0 0 1 0 12.4" />
+  </svg>
+);
+
+const VolumeMutedIcon = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M4 9.25h3.2L12 5.1v13.8l-4.8-4.15H4z" />
+    <path d="m16 9 5 5m0-5-5 5" />
+  </svg>
+);
+
+const EnterFullscreenIcon = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M8.5 4H4v4.5M4 4l6 6" />
+    <path d="M15.5 4H20v4.5M20 4l-6 6" />
+    <path d="M8.5 20H4v-4.5M4 20l6-6" />
+    <path d="M15.5 20H20v-4.5M20 20l-6-6" />
+  </svg>
+);
+
+const ExitFullscreenIcon = ({ className }: IconProps) => (
+  <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M9.5 4v5.5H4M4 9.5 9.5 4" />
+    <path d="M14.5 4v5.5H20M20 9.5 14.5 4" />
+    <path d="M9.5 20v-5.5H4M4 14.5 9.5 20" />
+    <path d="M14.5 20v-5.5H20M20 14.5 14.5 20" />
+  </svg>
+);
 
 
 interface NowPlayingProps {
@@ -405,8 +442,18 @@ const App = () => {
           <video ref={videoRef} autoPlay />
           <div className={`controls-overlay${controlsVisible ? " visible" : ""}`}>
             <div className="controls-left">
-              <button className="volume-icon" onClick={handleMuteToggle}>
-                {isMuted || volume === 0 ? "🔇" : "🔊"}
+              <button
+                className="control-button"
+                type="button"
+                onClick={handleMuteToggle}
+                aria-label={isMuted || volume === 0 ? "ミュート解除" : "ミュート"}
+                title={isMuted || volume === 0 ? "ミュート解除" : "ミュート"}
+              >
+                {isMuted || volume === 0 ? (
+                  <VolumeMutedIcon className="control-icon" />
+                ) : (
+                  <VolumeHighIcon className="control-icon" />
+                )}
               </button>
               <input
                 className="volume-slider"
@@ -416,11 +463,23 @@ const App = () => {
                 step={0.01}
                 value={isMuted ? 0 : volume}
                 onChange={handleVolumeChange}
+                aria-label="音量"
+                style={{ "--volume-level": `${(isMuted ? 0 : volume) * 100}%` } as CSSProperties}
               />
             </div>
             <div className="controls-right">
-              <button className="fullscreen-btn" onClick={handleFullscreenToggle}>
-                {isFullscreen ? "⊡" : "⛶"}
+              <button
+                className="control-button"
+                type="button"
+                onClick={handleFullscreenToggle}
+                aria-label={isFullscreen ? "全画面を終了" : "全画面"}
+                title={isFullscreen ? "全画面を終了" : "全画面"}
+              >
+                {isFullscreen ? (
+                  <ExitFullscreenIcon className="control-icon" />
+                ) : (
+                  <EnterFullscreenIcon className="control-icon" />
+                )}
               </button>
             </div>
           </div>

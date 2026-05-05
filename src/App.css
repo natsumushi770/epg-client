@@ -198,22 +198,26 @@ video {
   align-items: center;
   justify-content: space-between;
   padding: 16px 28px;
+  background: transparent;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transform: translateY(8px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
   pointer-events: none;
   z-index: 10;
-  min-height: 72px;
+  min-height: 64px;
 }
 
 .controls-overlay.visible {
   opacity: 1;
+  transform: translateY(0);
   pointer-events: auto;
 }
 
 .controls-left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+  min-width: 0;
 }
 
 .controls-right {
@@ -221,27 +225,63 @@ video {
   align-items: center;
 }
 
-.volume-icon {
-  background: none;
+.control-button {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  background: transparent;
   border: none;
+  border-radius: 50%;
   color: #fff;
-  font-size: 30px;
   cursor: pointer;
-  padding: 6px;
-  line-height: 1;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.volume-icon:hover {
-  color: #9fa8da;
+.control-button:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.control-button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.control-icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.controls-left .control-icon {
+  width: 26px;
+  height: 26px;
+}
+
+.control-icon path:first-child {
+  fill: currentColor;
+  stroke: none;
 }
 
 .volume-slider {
   -webkit-appearance: none;
   appearance: none;
-  width: 140px;
-  height: 6px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.3);
+  width: clamp(72px, 8vw, 104px);
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    #fff 0,
+    #fff var(--volume-level),
+    rgba(255, 255, 255, 0.35) var(--volume-level),
+    rgba(255, 255, 255, 0.35) 100%
+  );
   outline: none;
   cursor: pointer;
 }
@@ -249,27 +289,30 @@ video {
 .volume-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 20px;
-  height: 20px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: #9fa8da;
+  background: #fff;
+  border: none;
   cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .volume-slider::-webkit-slider-thumb:hover {
-  background: #fff;
+  transform: scale(1.25);
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.16);
 }
 
-.fullscreen-btn {
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 30px;
-  cursor: pointer;
-  padding: 6px;
-  line-height: 1;
+.volume-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.22);
 }
 
-.fullscreen-btn:hover {
-  color: #9fa8da;
+@media (max-width: 700px) {
+  .controls-overlay {
+    padding: 12px 18px;
+  }
+
+  .volume-slider {
+    width: 72px;
+  }
 }
