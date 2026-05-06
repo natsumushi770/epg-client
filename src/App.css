@@ -198,7 +198,12 @@ video {
   align-items: center;
   justify-content: space-between;
   padding: 16px 28px;
-  background: transparent;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.38),
+    rgba(0, 0, 0, 0.18) 56%,
+    transparent
+  );
   opacity: 0;
   transform: translateY(8px);
   transition: opacity 0.18s ease, transform 0.18s ease;
