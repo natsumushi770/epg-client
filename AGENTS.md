@@ -44,6 +44,11 @@ bun tauri dev
 bun tauri build
 ```
 
+## コミットメッセージ
+- Conventional Commits 形式で記述する
+- 説明文は日本語で記述する
+- 例: `feat: キーボードでチャンネルを切り替え`
+
 ## アーキテクチャ
 
 ### ストリーミングフロー
