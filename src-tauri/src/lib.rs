@@ -14,9 +14,10 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 
 const PROXY_PORT: u16 = 13000;
+const DEFAULT_API_BASE: &str = "http://optiplex-pc:8888";
 
 fn api_base() -> String {
-    std::env::var("API_BASE").unwrap_or_else(|_| env!("API_BASE").to_string())
+    std::env::var("API_BASE").unwrap_or_else(|_| DEFAULT_API_BASE.to_string())
 }
 
 #[derive(Debug, Serialize, Deserialize)]
