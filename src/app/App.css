@@ -118,6 +118,30 @@ video {
   min-height: 0;
   border-radius: 8px;
   background: #1a1a3e;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(121, 134, 203, 0.58) rgba(255, 255, 255, 0.04);
+  scrollbar-gutter: stable;
+}
+
+.channel-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.channel-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+  margin: 6px 0;
+}
+
+.channel-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #7986cb, #4f5fb5);
+  border: 2px solid #1a1a3e;
+  border-radius: 999px;
+  min-height: 48px;
+}
+
+.channel-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #9fa8da, #5c6bc0);
 }
 
 .channel-item {
